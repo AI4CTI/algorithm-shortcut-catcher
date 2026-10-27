@@ -1,0 +1,64 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Tooling caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.tox/
+.nox/
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# IDEs and OS files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Run outputs (default output directories, root only)
+/runs/
+/results/
+/output/
+
+# Data and models: this repository ships code only
+*.csv
+*.parquet
+*.pcap
+*.pcapng
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.joblib
+*.pkl
+!tests/data/**/*.csv
+
+# Internal working notes
+DESIGN.md
+/examples/data/

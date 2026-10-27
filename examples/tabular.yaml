@@ -1,0 +1,20 @@
+# Tabular run on one CSV file per split. Create the files with:
+#   uv run python examples/make_example_data.py examples/data
+backend: tabular
+data:
+  label_column: label
+  splits:
+    train: data/tabular/train.csv
+    validation: data/tabular/validation.csv   # optional for Random Forest; used in column screening
+    test: data/tabular/test.csv               # optional, monitoring only
+    verification: data/tabular/verification.csv
+    check: data/tabular/check.csv             # optional held-out split, never used for decisions
+loop:
+  metric: f1_macro        # verification metric that picks each removal
+  max_rounds: 6
+  window: 5               # candidates retrained per round
+  seed: 0
+model:
+  screening: autogluon    # or: exact
+  n_estimators: 300
+output_dir: ../runs/example-tabular
