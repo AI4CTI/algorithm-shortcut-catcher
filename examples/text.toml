@@ -1,0 +1,25 @@
+# Text run (experimental, needs the [text] extra) on one CSV with a `split` column.
+# Create the file with:  uv run python examples/make_example_data.py examples/data
+backend = "text"
+output_dir = "../runs/example-text"
+
+[data]
+file = "data/reviews.csv"
+split_column = "split"
+text_column = "text"
+label_column = "label"
+
+[loop]
+metric = "f1_macro"
+max_rounds = 3
+window = 5
+seed = 2
+
+[model]
+checkpoint = "google/electra-small-discriminator"
+epochs = 20
+batch_size = 32
+device = "cpu"
+
+[explainer]
+ranking = "count"    # or "v8"

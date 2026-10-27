@@ -1,0 +1,77 @@
+cff-version: 1.2.0
+title: "shortcut-catcher: find and remove shortcut features with an independent verification set"
+message: "If you use this software, please cite the paper below."
+type: software
+authors:
+  - family-names: Zhao
+    given-names: Yuqi
+    affiliation: "Politecnico di Torino"
+    orcid: "https://orcid.org/0009-0002-8221-6376"
+  - family-names: Boffa
+    given-names: Matteo
+    affiliation: "Politecnico di Torino"
+    orcid: "https://orcid.org/0000-0003-3144-9065"
+  - family-names: Vassio
+    given-names: Luca
+    affiliation: "Politecnico di Torino"
+    orcid: "https://orcid.org/0000-0002-2920-1856"
+  - family-names: Mellia
+    given-names: Marco
+    affiliation: "Politecnico di Torino"
+    orcid: "https://orcid.org/0000-0003-1859-6693"
+  - name: "AI4CTI contributors"
+repository-code: "https://github.com/AI4CTI/shortcut-catcher"
+url: "https://github.com/AI4CTI/shortcut-catcher"
+license: AGPL-3.0-or-later
+version: "0.1.0"
+date-released: "2026-10-30"
+keywords:
+  - shortcut-learning
+  - spurious-correlations
+  - explainable-ai
+  - feature-selection
+  - traffic-classification
+  - ai4cti
+abstract: >-
+  shortcut-catcher finds and removes shortcut features: features a model
+  exploits on its training data that do not generalise. It ranks the
+  features the model relies on with an explainer, retrains without each
+  top-ranked candidate, and keeps the removal that scores best on an
+  independently collected verification set. Removals accumulate over
+  rounds. The algorithm is independent of the data type; the package ships
+  a tabular backend (Random Forest with Gini importance) and an
+  experimental text backend (frozen ELECTRA encoder).
+preferred-citation:
+  type: article
+  title: "ShortcutCatcher: Making Traffic Classification Reliable"
+  authors:
+    - family-names: Zhao
+      given-names: Yuqi
+      orcid: "https://orcid.org/0009-0002-8221-6376"
+    - family-names: Boffa
+      given-names: Matteo
+      orcid: "https://orcid.org/0000-0003-3144-9065"
+    - family-names: Vassio
+      given-names: Luca
+      orcid: "https://orcid.org/0000-0002-2920-1856"
+    - family-names: Mellia
+      given-names: Marco
+      orcid: "https://orcid.org/0000-0003-1859-6693"
+  journal: "Proceedings of the ACM on Networking"
+  volume: 4
+  issue: "CoNEXT2"
+  start: 1
+  end: 15
+  year: 2026
+  month: 6
+  publisher:
+    name: "Association for Computing Machinery"
+  doi: "10.1145/3808671"
+  issn: "2834-5509"
+references:
+  - type: grant
+    authors:
+      - name: "Italian Ministry of Education"
+    title: >-
+      Italian Ministry of Education, Grant FISA-2023-00168
+      (AI4CTI: AI for Cyber Threat Intelligence)
