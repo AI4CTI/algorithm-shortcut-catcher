@@ -1,5 +1,9 @@
 # Tabular run on one CSV file per split. Create the files with:
 #   uv run python examples/make_example_data.py examples/data
+#
+# Active lines are what this example runs with. Commented lines list the other
+# options with their default values; uncomment one to change it.
+# Relative paths are resolved against this file's directory.
 backend: tabular
 data:
   label_column: label
@@ -9,12 +13,33 @@ data:
     test: data/tabular/test.csv               # optional, monitoring only
     verification: data/tabular/verification.csv
     check: data/tabular/check.csv             # optional held-out split, never used for decisions
+  # Instead of `splits`, one file with a column naming the split of each row:
+  # file: data/all.csv
+  # split_column: split
+
 loop:
-  metric: f1_macro        # verification metric that picks each removal
-  max_rounds: 6
+  metric: f1_macro        # verification metric that picks each removal:
+                          # accuracy, f1_macro, f1_micro, precision_macro, recall_macro, nll
+  max_rounds: 6           # default: 10
   window: 5               # candidates retrained per round
   seed: 0
+  # max_window: null      # if set, widen the window up to this size while no candidate helps
+  # extension_step: 1     # candidates added per widening
+  # stopping: fixed       # fixed: run max_rounds; patience: stop after `patience` rounds
+  # patience: null        #   without a new best verification score (required with `patience`)
+  # selection_metric: null  # metric for choosing the final round; defaults to `metric`
+
 model:
-  screening: autogluon    # or: exact
+  screening: autogluon    # autogluon: reproduce AutoGluon 1.4 column screening (paper setup)
+                          # exact: drop constant columns and exact duplicates only
+  # Any RandomForestClassifier parameter is accepted. Defaults (AutoGluon 1.4 settings):
   n_estimators: 300
+  # max_leaf_nodes: 15000
+  # criterion: gini
+  # bootstrap: true
+  # n_jobs: -1
+  # Do not set random_state: the seed comes from `loop.seed`.
+
+# explainer: the tabular backend uses Gini importance and takes no options.
+
 output_dir: ../runs/example-tabular
