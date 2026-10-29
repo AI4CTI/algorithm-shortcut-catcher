@@ -190,6 +190,8 @@ To try this on files, `uv run python examples/make_example_data.py examples/data
 
 ## CLI reference
 
+The `shortcut-catcher` command runs the loop from a configuration file, runs the bundled demos, and lists the installed backends.
+
 ```text
 shortcut-catcher [--version] [--verbose] COMMAND
 
@@ -203,9 +205,11 @@ shortcut-catcher [--version] [--verbose] COMMAND
 
 - `--json` prints a machine-readable summary on stdout; progress goes to stderr.
 - `--verbose` also prints every evaluated candidate and debug logs.
-- Without `--output-dir`, results go to `runs/<command>-<timestamp>/`, or under `$SHORTCUT_CATCHER_OUTPUT_DIR` if set. A `.env` file in the working directory is read; see [`.env.example`](.env.example).
+- Without `--output-dir`, results go to `runs/<command>-<timestamp>/`, or under `$SHORTCUT_CATCHER_OUTPUT_DIR` if set. Scripts read a `.env` file in the working directory; see [`.env.example`](.env.example).
 
 ## Python API
+
+The same loop can be built in Python, by combining a model, an explainer and a remover, without writing a configuration file.
 
 ```python
 from shortcut_catcher import ShortcutCatcher
@@ -263,7 +267,7 @@ The MLP and TabICL results of the paper used AutoGluon models with permutation i
 ## Limitations
 
 - **The verification set is used for every decision.** It picks the winner of every round and the final round, so the selected verification score is optimistic. Report the `check` split, which takes no part in any decision. A small verification set can also make the loop remove a genuine feature because it raises the verification score by chance.
-- **Greedy, one feature per round.** Each round adds one feature to the removal set and never puts one back. Shortcuts interact: a weak shortcut may only become visible after a stronger one is removed, and while a shortcut is still present, removing a genuine feature that counteracts its bias can raise the verification score more than removing the shortcut itself. A larger `window` evaluates more candidates per round but also gives noise more chances.
+- **Greedy, one feature per round.** Each round adds one feature to the removal set and never puts one back. Shortcuts interact: a weak shortcut may only become1 visible after a stronger one is removed, and while a shortcut is still present, removing a genuine feature that counteracts its bias can raise the verification score more than removing the shortcut itself. A larger `window` evaluates more candidates per round but also gives noise more chances.
 - **Shortcuts the model learns but the verification set does not punish are not removed.** A feature that stops being informative at deployment, rather than misleading, costs little on the verification set, and its removal may not stand out from noise.
 - **Cost.** Each round trains `window` models; a run trains about `1 + max_rounds × window` models.
 - **Classification only**, with metrics computed from predicted labels and probabilities.
@@ -272,12 +276,19 @@ The MLP and TabICL results of the paper used AutoGluon models with permutation i
 
 ## Development
 
+For contributors who change the code. To only use the package, see [Install](#install). CI runs the same checks on every push and pull request, without the slow tests.
+
 ```bash
+# Install the package in editable mode with test, lint and text dependencies
 uv sync --extra dev --extra text
+# Run ruff, mypy and file checks automatically on each `git commit`
 uv run pre-commit install
-uv run pytest                    # add -m "not slow" to skip the real-model text demo test
+# Run the test suite; add -m "not slow" to skip the real-model text demo test
+uv run pytest
+# Lint, and check the formatting without changing files (`ruff format .` applies it)
 uv run ruff check . && uv run ruff format --check .
-uv run mypy                      # strict, on src/shortcut_catcher/core
+# Type-check src/shortcut_catcher/core in strict mode
+uv run mypy
 ```
 
 Tests run on CPU. Text tests use a tiny offline encoder and are skipped when the `[text]` extra is not installed. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
