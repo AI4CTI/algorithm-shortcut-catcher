@@ -5,9 +5,10 @@
 [![Python 3.10–3.13](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org)
 [![Paper](https://img.shields.io/badge/DOI-10.1145%2F3808671-blue.svg)](https://doi.org/10.1145/3808671)
 
-`shortcut-catcher` finds and removes **shortcut features**: features a model exploits on its training data that do not hold where the model is deployed. It ranks the features the model relies on with an explainer, retrains without each top-ranked candidate, and keeps the removal that scores best on an independently collected **verification set**. Removals accumulate over rounds, and the round with the best verification score is selected.
+`shortcut-catcher` finds and removes **shortcut features**: features a model exploits on its training data that do not hold where the model is deployed. It I) ranks the features the model relies on with an explainer, II)retrains without each top-ranked candidate, and III) keeps the removal that scores best on an independently collected **verification set**. Removals accumulate over rounds, and the round with the best verification score is selected.
 
-This is the reference implementation of **ShortcutCatcher**, published in *Proceedings of the ACM on Networking* (CoNEXT 2026) for encrypted traffic classification. The algorithm does not depend on the data type: the package ships a tabular backend (Random Forest with Gini importance, used in the paper) and an **experimental** text backend (frozen ELECTRA encoder).
+This is the reference implementation of **ShortcutCatcher**, published in _Proceedings of the ACM on Networking_ (CoNEXT 2026) for encrypted traffic classification.
+The algorithm does not depend on the data type: the package ships a tabular backend (Random Forest with Gini importance, used in the paper) and an **experimental** text backend (frozen ELECTRA encoder).
 
 > **Citation.** If you use this tool in academic work, please cite the paper; see [Citation](#citation) and [`CITATION.cff`](CITATION.cff).
 
@@ -30,13 +31,13 @@ This is the reference implementation of **ShortcutCatcher**, published in *Proce
 
 ## Background
 
-A classifier can reach high accuracy on its test set by relying on features that are artefacts of how the training data was collected: an IP address, a checksum, a timestamp, a word that happens to appear in one class. These **shortcuts** are predictive on data from the same collection, so a held-out test split does not reveal them. They fail once the model meets data from a different scenario.
+A classifier can reach high accuracy on its test set by relying on features that are artefacts of how the training data was collected: an IP address, a checksum, a timestamp, a word that happens to appear in one class. The hypothesis is that these **shortcuts** are predictive on data from the same collection; this means that an held-out test split should not reveal them. While boosting performance in the training collection, these shortcuts fail to generalise once the model meets data from a different scenario.
 
 ShortcutCatcher uses two datasets with the same features: the training data, and a smaller **verification set** collected in a different scenario. A shortcut helps on the first and hurts on the second. The loop removes, one at a time, the features whose removal improves the verification score.
 
-**How this differs from recursive feature elimination (RFE).** RFE removes the features a model *ignores*, to make it smaller while keeping accuracy on the same distribution. ShortcutCatcher removes the features a model *exploits* but that fail to generalise, and judges each removal on an independent verification set rather than on the training distribution. Its candidates are the most important features, not the least important ones.
+**How this differs from recursive feature elimination (RFE).** RFE removes the features a model _ignores_, to make the feature set smaller while keeping accuracy on the same distribution. ShortcutCatcher removes the features a model _exploits_ but that impedes it to generalise, and judges each removal on an independent verification set rather than on the training distribution. Its candidates are the most important features, not the least important ones.
 
-## How it works
+## How it works - pseudo-code
 
 ```text
 removed = []
@@ -45,32 +46,33 @@ for round in 1..max_rounds:
     ranking    = explainer(model, train)              # most important features first
     candidates = top `window` features not yet removed
     for each candidate c:                             # one retraining per candidate
-        model_c = fit(train without removed + [c])
+        model_c = fit(train without removed candidate c)
         score_c = verification score of model_c
     winner   = candidate with the best score_c        # ties keep the higher-ranked one
     removed += [winner];  model = model_winner
 selected = round with the best verification score      # round 0 (nothing removed) included
 ```
 
-Each round costs `window` model fits. The winner of a round is adopted even if every candidate lowers the verification score; the final selection step then picks the best round. With `max_window` set, a round first evaluates `window` candidates and keeps adding candidates while none of them improves on the previous round.
+Each round costs `window` model fits. The winner of a round is adopted even if every candidate lowers the verification score; the final selection step then picks the best round.
+With `max_window` set, a round first evaluates `window` candidates and keeps adding candidates while none of them improves on the previous round.
 
 The data can have up to five splits:
 
-| Split | Role | Required |
-| --- | --- | --- |
-| `train` | Fits the model; explained to rank features. | yes |
-| `validation` | Picks the best training epoch (text) and takes part in column screening (tabular). | text: yes; tabular: no |
-| `test` | Same scenario as `train`; reported only. | no |
-| `verification` | Different scenario; picks the winner of each round and the final round. | yes |
-| `check` | Different scenario, never used for decisions: a fair estimate for the selected model. | no, but recommended |
+| Split          | Role                                                                                  | Required            |
+| -------------- | ------------------------------------------------------------------------------------- | ------------------- |
+| `train`        | Fits the model; explained to rank features.                                           | yes                 |
+| `validation`   | Picks the best hyper-parameters.                                                      | yes                 |
+| `test`         | Same scenario as `train`; reported only.                                              | no                  |
+| `verification` | Different scenario; picks the winner of each round and the final round.               | yes                 |
+| `check`        | Different scenario, never used for decisions: a fair estimate for the selected model. | no, but recommended |
 
 Backends:
 
-| Component | `tabular` | `text` (experimental) |
-| --- | --- | --- |
-| Model | scikit-learn Random Forest, settings of the published experiments | frozen ELECTRA encoder + gated attention pooling + MLP head |
-| Explainer | Gini (impurity) importance | pooling weights → word scores → per-sample log-MAD outliers → Count or V8 ranking |
-| Remover | drop columns | delete words (case-insensitive, whole words) |
+| Component | `tabular`                                                         | `text` (experimental)                                                             |
+| --------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Model     | scikit-learn Random Forest, settings of the published experiments | frozen ELECTRA encoder + gated attention pooling + MLP head                       |
+| Explainer | Gini (impurity) importance                                        | pooling weights → word scores → per-sample log-MAD outliers → Count or V8 ranking |
+| Remover   | drop columns                                                      | delete words (case-insensitive, whole words)                                      |
 
 ## Install
 
@@ -99,15 +101,16 @@ uv run shortcut-catcher list-backends
 
 ## Quickstart
 
-Both demos generate their data inside the repository: no dataset is shipped or downloaded. Each plants **three shortcuts of different strength** with ordinary-looking names, so neither the names nor the explainer ranking alone give them away. They run on a laptop CPU in under a minute, with fixed seeds.
+Both demos generate their data inside the repository. Each plants **three shortcuts of different strength** with ordinary-looking names, so neither the names nor the explainer ranking alone give them away.
+They run on a laptop CPU in under a minute, with fixed seeds.
 
 **Tabular.** A four-class, flow-like dataset (`video`, `web`, `chat`, `voip`) with five genuine features of different strength (`pkt_len_mean`, `iat_mean`, ...), three noise columns, one constant column and three planted shortcuts:
 
-| Shortcut | In training | At deployment (verification/check) |
-| --- | --- | --- |
-| `ttl_initial` (strong) | `web` flows mostly captured on a host with initial TTL 128, the rest with TTL 64 | TTL unrelated to the class |
-| `capture_hour` (moderate) | `chat` flows mostly captured at night | every class at every hour |
-| `ip_id_jitter` (weak) | higher for `video` | higher for `voip`: it now misleads |
+| Shortcut                  | In training                                                                      | At deployment (verification/check) |
+| ------------------------- | -------------------------------------------------------------------------------- | ---------------------------------- |
+| `ttl_initial` (strong)    | `web` flows mostly captured on a host with initial TTL 128, the rest with TTL 64 | TTL unrelated to the class         |
+| `capture_hour` (moderate) | `chat` flows mostly captured at night                                            | every class at every hour          |
+| `ip_id_jitter` (weak)     | higher for `video`                                                               | higher for `voip`: it now misleads |
 
 ```bash
 uv run shortcut-catcher demo tabular
@@ -117,11 +120,11 @@ With the default seed, a genuine feature (`iat_mean`) is ranked first; the short
 
 **Text (experimental).** Two-clause movie reviews labelled `pos` or `neg`, with sentiment adjectives as the real signal, and three ordinary words planted at different rates:
 
-| Shortcut | In training | At deployment |
-| --- | --- | --- |
-| `really` (strong) | "really" before an adjective in most positive reviews | in most negative reviews |
-| `honestly` (moderate) | clause ending in many negative reviews | in many positive reviews |
-| `overall` (weak) | somewhat more frequent in positive reviews | somewhat more frequent in negative reviews |
+| Shortcut              | In training                                           | At deployment                              |
+| --------------------- | ----------------------------------------------------- | ------------------------------------------ |
+| `really` (strong)     | "really" before an adjective in most positive reviews | in most negative reviews                   |
+| `honestly` (moderate) | clause ending in many negative reviews                | in many positive reviews                   |
+| `overall` (weak)      | somewhat more frequent in positive reviews            | somewhat more frequent in negative reviews |
 
 ```bash
 uv run --extra text shortcut-catcher demo text
@@ -136,10 +139,10 @@ The demo output ends with a table of the planted shortcuts: their rank before ro
 Describe the run in a YAML or TOML file and pass it to `shortcut-catcher run`. Relative paths are resolved against the configuration file.
 
 ```yaml
-backend: tabular            # or: text
+backend: tabular # or: text
 data:
   label_column: class
-  splits:                   # one CSV/Parquet per split ...
+  splits: # one CSV/Parquet per split ...
     train: data/train.csv
     validation: data/val.csv
     verification: data/verification.csv
@@ -149,16 +152,16 @@ data:
   # split_column: split
   # text_column: text       # text backend
 loop:
-  metric: f1_macro          # tabular: accuracy, f1_macro, f1_micro, precision_macro, recall_macro, nll; text: accuracy, f1_macro, nll
+  metric: f1_macro # tabular: accuracy, f1_macro, f1_micro, precision_macro, recall_macro, nll; text: accuracy, f1_macro, nll
   max_rounds: 10
   window: 5
-  max_window: null          # set to extend the window while no candidate helps
+  max_window: null # set to extend the window while no candidate helps
   extension_step: 1
   seed: 0
-  stopping: fixed           # or: patience (then set `patience: N`)
-  selection_metric: null    # metric for the final round choice; defaults to `metric`
-model: {}                   # backend model options, see below
-explainer: {}               # backend explainer options (text only)
+  stopping: fixed # or: patience (then set `patience: N`)
+  selection_metric: null # metric for the final round choice; defaults to `metric`
+model: {} # backend model options, see below
+explainer: {} # backend explainer options (text only)
 output_dir: runs/my-run
 ```
 
@@ -177,13 +180,13 @@ To try this on files, `uv run python examples/make_example_data.py examples/data
 
 **Outputs** in `output_dir`:
 
-| File | Contents |
-| --- | --- |
-| `history.json` | Every round: removed features, metrics on every split, evaluated candidates, explainer ranking head |
-| `rounds.csv` | One row per round with metrics per split |
-| `candidates.csv` | One row per evaluated candidate: rank, explainer score, verification score, gain |
-| `selected.json` | Selected round, removed features, kept features (tabular), metrics |
-| `config.json` | The configuration of the run |
+| File             | Contents                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| `history.json`   | Every round: removed features, metrics on every split, evaluated candidates, explainer ranking head |
+| `rounds.csv`     | One row per round with metrics per split                                                            |
+| `candidates.csv` | One row per evaluated candidate: rank, explainer score, verification score, gain                    |
+| `selected.json`  | Selected round, removed features, kept features (tabular), metrics                                  |
+| `config.json`    | The configuration of the run                                                                        |
 
 ## CLI reference
 

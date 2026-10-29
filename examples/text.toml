@@ -1,5 +1,10 @@
 # Text run (experimental, needs the [text] extra) on one CSV with a `split` column.
 # Create the file with:  uv run python examples/make_example_data.py examples/data
+#
+# Active lines are what this example runs with. Commented lines list the other
+# options with their default values; uncomment one to change it.
+# TOML has no null: to leave an option unset, keep it commented out.
+# Relative paths are resolved against this file's directory.
 backend = "text"
 output_dir = "../runs/example-text"
 
@@ -8,18 +13,48 @@ file = "data/reviews.csv"
 split_column = "split"
 text_column = "text"
 label_column = "label"
+# Instead of `file`, one file per split:
+# [data.splits]
+# train = "data/train.csv"
+# validation = "data/val.csv"
+# verification = "data/verification.csv"
 
 [loop]
-metric = "f1_macro"
-max_rounds = 3
-window = 5
-seed = 2
+metric = "f1_macro"         # accuracy, f1_macro or nll
+max_rounds = 3              # default: 10
+window = 5                  # candidates retrained per round
+seed = 2                    # default: 0
+# max_window = 10           # unset by default; widen the window up to this size while no candidate helps
+# extension_step = 1        # candidates added per widening
+# stopping = "fixed"        # "fixed": run max_rounds; "patience": stop after `patience` rounds
+# patience = 2              #   without a new best verification score (required with "patience")
+# selection_metric = "accuracy"  # unset by default: the final round is chosen with `metric`
 
 [model]
-checkpoint = "google/electra-small-discriminator"
-epochs = 20
-batch_size = 32
-device = "cpu"
+checkpoint = "google/electra-small-discriminator"  # Hugging Face id or local directory
+epochs = 20                 # default: 30 (paper setup)
+batch_size = 32             # default: 128 (paper setup)
+device = "cpu"              # unset by default: CUDA when available, else CPU
+# head = "gate_weight_pooling"           # or "normal_weight_pooling"
+# learning_rate = 0.005
+# weight_decay = 0.001
+# warmup_ratio = 0.1
+# gradient_clip = 1.0
+# dropout = 0.1
+# checkpoint_metric = "validation_f1_macro"  # best epoch by: "validation_f1_macro" or "validation_loss"
+# early_stopping_patience = 5            # unset by default (no early stopping)
+# max_length = 512                       # encoder token window
 
 [explainer]
-ranking = "count"    # or "v8"
+ranking = "count"           # "count": samples in which the word is an outlier
+                            # "v8": filter by min_df, max_entropy, min_outliers, then sum outlier scores
+# token_to_word = "max"                  # token weights -> word score: "max", "sum" or "avg"
+# outlier_method = "log_mad"             # or "top_fraction" ("v8" needs "log_mad")
+# outlier_z = 3.5                        # log_mad: z threshold on log(weight / mean weight)
+# outlier_min_ratio = 2.0                # log_mad: word weight must be at least this x the mean
+# outlier_min_words = 3                  # sentences with fewer words are not assessed
+# top_fraction = 0.25                    # top_fraction: share of words flagged per sentence
+# min_df = 0.01                          # v8: minimum document frequency
+# max_entropy = 0.5                      # v8: maximum normalised class entropy
+# min_outliers = 1                       # v8: minimum number of outlier sentences
+# v8_score_field = "outlier_score"       # v8: or "outlier_sum_score"
