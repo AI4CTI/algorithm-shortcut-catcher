@@ -46,6 +46,40 @@ def test_load_text_splits(tmp_path):
     assert len(load_text_splits({"train": tmp_path / "one.csv"})["train"]) == 3
 
 
+def test_config_loader_keeps_na_like_texts(tmp_path):
+    # pandas reads "NA", "null" and "None" as missing by default; for text they
+    # are ordinary texts, in the CLI loader as in load_text_splits.
+    from shortcut_catcher.backends import load_splits
+    from shortcut_catcher.config import DataConfig
+
+    frame = pd.DataFrame(
+        {
+            "text": ["NA", "null", "None", "fine"],
+            "label": ["pos", "neg", "pos", "neg"],
+            "split": ["train", "train", "train", "verification"],
+        }
+    )
+    frame.to_csv(tmp_path / "all.csv", index=False)
+    splits = load_splits("text", DataConfig(file=tmp_path / "all.csv"))
+    assert splits["train"].texts == ("NA", "null", "None")
+    assert splits["train"].texts == load_text_splits(tmp_path / "all.csv")["train"].texts
+
+
+@pytest.mark.parametrize("blank", ["", "   "])
+def test_empty_texts_are_rejected_by_both_loaders(tmp_path, blank):
+    from shortcut_catcher.backends import load_splits
+    from shortcut_catcher.config import DataConfig
+
+    frame = pd.DataFrame(
+        {"text": ["fine", blank], "label": ["pos", "neg"], "split": ["train", "train"]}
+    )
+    frame.to_csv(tmp_path / "all.csv", index=False)
+    with pytest.raises(ValueError, match="Empty texts in 1 rows"):
+        load_splits("text", DataConfig(file=tmp_path / "all.csv"))
+    with pytest.raises(ValueError, match="Empty texts in 1 rows"):
+        load_text_splits(tmp_path / "all.csv")
+
+
 # --- explainer on hand-set weights ---------------------------------------------
 
 
