@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: "shortcut-catcher: find and remove shortcut features with an independent verification set"
+title: "algorithm-shortcut-catcher: the ShortcutCatcher algorithm as a problem-agnostic library"
 message: "If you use this software, please cite the paper below."
 type: software
 authors:
@@ -20,8 +20,8 @@ authors:
     affiliation: "Politecnico di Torino"
     orcid: "https://orcid.org/0000-0003-1859-6693"
   - name: "AI4CTI contributors"
-repository-code: "https://github.com/AI4CTI/shortcut-catcher"
-url: "https://github.com/AI4CTI/shortcut-catcher"
+repository-code: "https://github.com/AI4CTI/algorithm-shortcut-catcher"
+url: "https://github.com/AI4CTI/algorithm-shortcut-catcher"
 license: AGPL-3.0-or-later
 version: "0.1.0"
 date-released: "2026-10-30"
@@ -33,8 +33,10 @@ keywords:
   - traffic-classification
   - ai4cti
 abstract: >-
-  shortcut-catcher finds and removes shortcut features: features a model
-  exploits on its training data that do not generalise. It ranks the
+  algorithm-shortcut-catcher releases the ShortcutCatcher algorithm as a
+  problem-agnostic library; the CoNEXT 2026 paper applies it to encrypted
+  traffic classification. It finds and removes shortcut features: features
+  a model exploits on its training data that do not generalise. It ranks the
   features the model relies on with an explainer, retrains without each
   top-ranked candidate, and keeps the removal that scores best on an
   independently collected verification set. Removals accumulate over

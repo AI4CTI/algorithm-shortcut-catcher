@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+- Repository renamed to `algorithm-shortcut-catcher` to make clear that it releases the problem-agnostic algorithm; the original ShortcutCatcher repository is its application to traffic classification. The package, import and CLI names (`shortcut-catcher`, `shortcut_catcher`) are unchanged.
+- README: new section "Relationship to the original ShortcutCatcher".
+
 ## [0.1.0] — 2026-10-30
 
 First public release under the [AI4CTI](https://github.com/AI4CTI) organisation. It merges the code of the CoNEXT 2026 paper (tabular, traffic classification) and a text-classification extension into one package where the algorithm does not depend on the data type. The history of the original research repositories is not part of this repository.
