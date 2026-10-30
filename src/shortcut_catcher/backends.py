@@ -42,14 +42,14 @@ BACKENDS: dict[str, BackendInfo] = {
         description="Random Forest (scikit-learn), Gini importance, column removal.",
         experimental=False,
         requires=("sklearn",),
-        install='pip install "shortcut-catcher"',
+        install="uv sync (or, from the repository: pip install .)",
     ),
     "text": BackendInfo(
         name="text",
         description="Frozen ELECTRA encoder, pooling-weight word ranking, word removal.",
         experimental=True,
         requires=("torch", "transformers"),
-        install='pip install "shortcut-catcher[text]"',
+        install='uv sync --extra text (or, from the repository: pip install ".[text]")',
     ),
 }
 

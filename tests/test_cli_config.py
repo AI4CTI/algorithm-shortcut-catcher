@@ -183,6 +183,6 @@ def test_cli_messages_keep_square_brackets(monkeypatch):
     )
     result = runner.invoke(app, ["demo", "text"])
     assert result.exit_code == 2
-    assert "shortcut-catcher[text]" in result.output
+    assert ".[text]" in result.output
     listing = runner.invoke(app, ["list-backends"])
     assert "[text]" in listing.output
