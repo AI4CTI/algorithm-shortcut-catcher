@@ -1,4 +1,4 @@
-# Contributing to shortcut-catcher
+# Contributing to algorithm-shortcut-catcher
 
 Thank you for your interest in contributing. This is a research tool, so the workflow is lightweight.
 
@@ -11,8 +11,8 @@ This project follows the [Contributor Covenant 2.1](CODE_OF_CONDUCT.md). By part
 You need [`uv`](https://docs.astral.sh/uv/).
 
 ```bash
-git clone https://github.com/AI4CTI/shortcut-catcher.git
-cd shortcut-catcher
+git clone https://github.com/AI4CTI/algorithm-shortcut-catcher.git
+cd algorithm-shortcut-catcher
 uv sync --extra dev
 uv run pre-commit install
 uv run pytest

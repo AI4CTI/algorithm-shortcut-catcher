@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "shortcut-catcher"
-description = "Find and remove shortcut features: features a model exploits on its training data that do not generalise."
+description = "The ShortcutCatcher algorithm as a problem-agnostic library: find and remove shortcut features that a model exploits on its training data but that do not generalise."
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
 license = "AGPL-3.0-or-later"
@@ -73,10 +73,10 @@ dev = [
 shortcut-catcher = "shortcut_catcher.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/AI4CTI/shortcut-catcher"
-Repository = "https://github.com/AI4CTI/shortcut-catcher"
-Issues = "https://github.com/AI4CTI/shortcut-catcher/issues"
-Changelog = "https://github.com/AI4CTI/shortcut-catcher/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/AI4CTI/algorithm-shortcut-catcher"
+Repository = "https://github.com/AI4CTI/algorithm-shortcut-catcher"
+Issues = "https://github.com/AI4CTI/algorithm-shortcut-catcher/issues"
+Changelog = "https://github.com/AI4CTI/algorithm-shortcut-catcher/blob/main/CHANGELOG.md"
 Paper = "https://doi.org/10.1145/3808671"
 
 # uv only: on Linux, take the CPU build of PyTorch, which is much smaller than the

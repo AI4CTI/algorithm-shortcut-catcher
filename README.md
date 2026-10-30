@@ -1,14 +1,15 @@
-# shortcut-catcher
+# algorithm-shortcut-catcher
 
-[![CI](https://github.com/AI4CTI/shortcut-catcher/actions/workflows/ci.yml/badge.svg)](https://github.com/AI4CTI/shortcut-catcher/actions/workflows/ci.yml)
+[![CI](https://github.com/AI4CTI/algorithm-shortcut-catcher/actions/workflows/ci.yml/badge.svg)](https://github.com/AI4CTI/algorithm-shortcut-catcher/actions/workflows/ci.yml)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Python 3.10–3.13](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org)
 [![Paper](https://img.shields.io/badge/DOI-10.1145%2F3808671-blue.svg)](https://doi.org/10.1145/3808671)
 
-`shortcut-catcher` finds and removes **shortcut features**: features a model exploits on its training data that do not hold where the model is deployed. It I) ranks the features the model relies on with an explainer, II) retrains without each top-ranked candidate, and III) keeps the removal that scores best on an independently collected **verification set**. Removals accumulate over rounds, and the round with the best verification score is selected.
+This repository releases the **ShortcutCatcher algorithm** as a problem-agnostic library. ShortcutCatcher was introduced in _Proceedings of the ACM on Networking_ (CoNEXT 2026) and applied there to encrypted traffic classification. The code and datasets of that application are in [SmartData-Polito/ShortcutCatcher](https://github.com/SmartData-Polito/ShortcutCatcher). See [Relationship to the original ShortcutCatcher](#relationship-to-the-original-shortcutcatcher).
 
-This is the reference implementation of **ShortcutCatcher**, published in _Proceedings of the ACM on Networking_ (CoNEXT 2026) for encrypted traffic classification.
-The algorithm does not depend on the data type: the package ships a tabular backend (Random Forest with Gini importance, used in the paper) and an **experimental** text backend (frozen ELECTRA encoder).
+The `shortcut-catcher` package finds and removes **shortcut features**: features a model exploits on its training data that do not hold where the model is deployed. It I) ranks the features the model relies on with an explainer, II) retrains without each top-ranked candidate, and III) keeps the removal that scores best on an independently collected **verification set**. Removals accumulate over rounds, and the round with the best verification score is selected.
+
+The algorithm does not depend on the data type or the model. The package ships a tabular backend (Random Forest with Gini importance, as in the paper) and an **experimental** text backend (frozen ELECTRA encoder), and new backends can be added by implementing four small interfaces.
 
 > **Citation.** If you use this tool in academic work, please cite the paper; see [Citation](#citation) and [`CITATION.cff`](CITATION.cff).
 
@@ -17,6 +18,7 @@ The algorithm does not depend on the data type: the package ships a tabular back
 ## Contents
 
 - [Background](#background)
+- [Relationship to the original ShortcutCatcher](#relationship-to-the-original-shortcutcatcher)
 - [How it works](#how-it-works)
 - [Install](#install)
 - [Quickstart](#quickstart)
@@ -36,6 +38,19 @@ A classifier can reach high accuracy on its test set by relying on features that
 ShortcutCatcher uses two datasets with the same features: the training data, and a smaller **verification set** collected in a different scenario. A shortcut helps on the first and hurts on the second. The loop removes, one at a time, the features whose removal improves the verification score.
 
 **How this differs from recursive feature elimination (RFE).** RFE removes the features a model _ignores_, to make the feature set smaller while keeping accuracy on the same distribution. ShortcutCatcher removes the features a model _exploits_ but that prevent it from generalising, and judges each removal on an independent verification set rather than on the training distribution. Its candidates are the most important features, not the least important ones.
+
+## Relationship to the original ShortcutCatcher
+
+The CoNEXT 2026 paper presents ShortcutCatcher through one application, encrypted traffic classification, and its repository serves that application. This repository extracts the algorithm and makes it independent of the problem.
+
+|           | [SmartData-Polito/ShortcutCatcher](https://github.com/SmartData-Polito/ShortcutCatcher) | algorithm-shortcut-catcher (this repository)                                              |
+| --------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Scope     | One application: encrypted traffic classification                                       | The algorithm, independent of the problem                                            |
+| Data      | Datasets of the paper                                                                   | No data; demos run on synthetic data                                                 |
+| Models    | AutoGluon models on traffic features                                                    | Pluggable backends: tabular (as in the paper), text (experimental), or your own      |
+| Use it to | Reproduce the results of the paper                                                      | Apply the method to a new classification problem                                     |
+
+On the paper's data, the tabular backend removes the same features in the same order as the original code; see [Reproducing the paper](#reproducing-the-paper).
 
 ## How it works
 
@@ -79,8 +94,8 @@ Backends:
 Python 3.10 to 3.13. The package is not yet on PyPI; install it from source.
 
 ```bash
-git clone https://github.com/AI4CTI/shortcut-catcher.git
-cd shortcut-catcher
+git clone https://github.com/AI4CTI/algorithm-shortcut-catcher.git
+cd algorithm-shortcut-catcher
 
 # Core and tabular backend
 uv sync                     # or: pip install .
