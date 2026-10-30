@@ -1,7 +1,9 @@
 """Text demo (experimental): three planted shortcut words of different strength in movie reviews.
 
 Needs the [text] extra. Downloads google/electra-small-discriminator (about 55 MB)
-from Hugging Face on first use; runs on CPU.Run with:  uv run --extra text python examples/text_demo.py
+from Hugging Face on first use; runs on CPU.
+
+Run with:  uv run --extra text python examples/text_demo.py
 Same as:   shortcut-catcher demo text
 """
 
