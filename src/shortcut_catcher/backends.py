@@ -86,9 +86,11 @@ def build_components(
 
 def load_splits(backend: str, data: DataConfig) -> dict[str, Any]:
     """Read the data files of a configuration into backend datasets."""
+    # Text keeps every string ("NA", "None" are texts); tabular reads them as missing.
+    keep_default_na = backend != "text"
     frames: dict[str, pd.DataFrame]
     if data.file is not None:
-        frame = _read_table(data.file)
+        frame = _read_table(data.file, keep_default_na=keep_default_na)
         if data.split_column not in frame.columns:
             raise ConfigError(f"Column {data.split_column!r} not found in {data.file}.")
         frames = {
@@ -99,7 +101,10 @@ def load_splits(backend: str, data: DataConfig) -> dict[str, Any]:
         if unknown:
             raise ConfigError(f"Unknown values in {data.split_column!r}: {sorted(unknown)}.")
     else:
-        frames = {name: _read_table(path) for name, path in data.splits.items()}
+        frames = {
+            name: _read_table(path, keep_default_na=keep_default_na)
+            for name, path in data.splits.items()
+        }
 
     if backend == "tabular":
         from .tabular import TabularData
@@ -118,12 +123,12 @@ def load_splits(backend: str, data: DataConfig) -> dict[str, Any]:
     }
 
 
-def _read_table(path: Path) -> pd.DataFrame:
+def _read_table(path: Path, *, keep_default_na: bool = True) -> pd.DataFrame:
     if not path.is_file():
         raise ConfigError(f"Data file not found: {path}")
     if path.suffix == ".parquet":
         return pd.read_parquet(path)
-    return pd.read_csv(path)
+    return pd.read_csv(path, keep_default_na=keep_default_na)
 
 
 def make_loop(loop: LoopConfig, components: tuple[Any, Any, Any]) -> ShortcutCatcher[Any]:

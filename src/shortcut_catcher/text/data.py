@@ -34,10 +34,15 @@ class TextData:
             raise ValueError(f"Missing columns: {sorted(missing)}.")
         if frame[[text_column, label_column]].isna().any().any():
             raise ValueError("Texts and labels must not be missing.")
-        return cls(
-            texts=tuple(str(t) for t in frame[text_column]),
-            labels=tuple(frame[label_column].tolist()),
-        )
+        texts = tuple(str(t) for t in frame[text_column])
+        # Checked on input only: word removal may legitimately leave a text empty.
+        empty = [i for i, t in enumerate(texts) if not t.strip()]
+        if empty:
+            raise ValueError(
+                f"Empty texts in {len(empty)} rows (first: row {empty[0] + 1} of the split); "
+                "remove them or fill them in."
+            )
+        return cls(texts=texts, labels=tuple(frame[label_column].tolist()))
 
     def with_texts(self, texts: Sequence[str]) -> TextData:
         return TextData(texts=tuple(texts), labels=self.labels)
