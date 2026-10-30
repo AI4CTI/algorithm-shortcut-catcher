@@ -5,7 +5,7 @@
 [![Python 3.10–3.13](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org)
 [![Paper](https://img.shields.io/badge/DOI-10.1145%2F3808671-blue.svg)](https://doi.org/10.1145/3808671)
 
-`shortcut-catcher` finds and removes **shortcut features**: features a model exploits on its training data that do not hold where the model is deployed. It I) ranks the features the model relies on with an explainer, II)retrains without each top-ranked candidate, and III) keeps the removal that scores best on an independently collected **verification set**. Removals accumulate over rounds, and the round with the best verification score is selected.
+`shortcut-catcher` finds and removes **shortcut features**: features a model exploits on its training data that do not hold where the model is deployed. It I) ranks the features the model relies on with an explainer, II) retrains without each top-ranked candidate, and III) keeps the removal that scores best on an independently collected **verification set**. Removals accumulate over rounds, and the round with the best verification score is selected.
 
 This is the reference implementation of **ShortcutCatcher**, published in _Proceedings of the ACM on Networking_ (CoNEXT 2026) for encrypted traffic classification.
 The algorithm does not depend on the data type: the package ships a tabular backend (Random Forest with Gini importance, used in the paper) and an **experimental** text backend (frozen ELECTRA encoder).
@@ -31,13 +31,13 @@ The algorithm does not depend on the data type: the package ships a tabular back
 
 ## Background
 
-A classifier can reach high accuracy on its test set by relying on features that are artefacts of how the training data was collected: an IP address, a checksum, a timestamp, a word that happens to appear in one class. The hypothesis is that these **shortcuts** are predictive on data from the same collection; this means that an held-out test split should not reveal them. While boosting performance in the training collection, these shortcuts fail to generalise once the model meets data from a different scenario.
+A classifier can reach high accuracy on its test set by relying on features that are artefacts of how the training data was collected: an IP address, a checksum, a timestamp, a word that happens to appear in one class. The hypothesis is that these **shortcuts** are predictive on data from the same collection; this means that a held-out test split should not reveal them. While boosting performance in the training collection, these shortcuts fail to generalise once the model meets data from a different scenario.
 
 ShortcutCatcher uses two datasets with the same features: the training data, and a smaller **verification set** collected in a different scenario. A shortcut helps on the first and hurts on the second. The loop removes, one at a time, the features whose removal improves the verification score.
 
-**How this differs from recursive feature elimination (RFE).** RFE removes the features a model _ignores_, to make the feature set smaller while keeping accuracy on the same distribution. ShortcutCatcher removes the features a model _exploits_ but that impedes it to generalise, and judges each removal on an independent verification set rather than on the training distribution. Its candidates are the most important features, not the least important ones.
+**How this differs from recursive feature elimination (RFE).** RFE removes the features a model _ignores_, to make the feature set smaller while keeping accuracy on the same distribution. ShortcutCatcher removes the features a model _exploits_ but that prevent it from generalising, and judges each removal on an independent verification set rather than on the training distribution. Its candidates are the most important features, not the least important ones.
 
-## How it works - pseudo-code
+## How it works
 
 ```text
 removed = []
@@ -102,7 +102,7 @@ uv run shortcut-catcher list-backends
 ## Quickstart
 
 Both demos generate their data inside the repository. Each plants **three shortcuts of different strength** with ordinary-looking names, so neither the names nor the explainer ranking alone give them away.
-They run on a laptop CPU in under a minute, with fixed seeds.
+They run on a laptop CPU in under two minutes, with fixed seeds.
 
 **Tabular.** A four-class, flow-like dataset (`video`, `web`, `chat`, `voip`) with five genuine features of different strength (`pkt_len_mean`, `iat_mean`, ...), three noise columns, one constant column and three planted shortcuts:
 
@@ -116,7 +116,7 @@ They run on a laptop CPU in under a minute, with fixed seeds.
 uv run shortcut-catcher demo tabular
 ```
 
-With the default seed, a genuine feature (`iat_mean`) is ranked first; the shortcuts are ranked 2nd to 4th. The loop removes `ip_id_jitter` first, because that removal helps the verification score most, then `ttl_initial` and `capture_hour`. Rounds 4–6 remove other features and no longer help, so round 3 is selected: exactly the three shortcuts, with verification macro-F1 from about 0.50 to 0.67 and check macro-F1 from about 0.46 to 0.67.
+With the default seed, a genuine feature (`iat_mean`) is ranked first; the shortcuts are ranked 2nd to 4th. The loop removes `ip_id_jitter` first, because that removal helps the verification score most, then `ttl_initial` and `capture_hour`. Rounds 4–6 remove other features and no longer help, so round 3 is selected: exactly the three shortcuts, with verification macro-F1 from about 0.50 to 0.67 and check macro-F1 from about 0.45 to 0.67.
 
 **Text (experimental).** Two-clause movie reviews labelled `pos` or `neg`, with sentiment adjectives as the real signal, and three ordinary words planted at different rates:
 
@@ -267,12 +267,12 @@ The MLP and TabICL results of the paper used AutoGluon models with permutation i
 ## Limitations
 
 - **The verification set is used for every decision.** It picks the winner of every round and the final round, so the selected verification score is optimistic. Report the `check` split, which takes no part in any decision. A small verification set can also make the loop remove a genuine feature because it raises the verification score by chance.
-- **Greedy, one feature per round.** Each round adds one feature to the removal set and never puts one back. Shortcuts interact: a weak shortcut may only become1 visible after a stronger one is removed, and while a shortcut is still present, removing a genuine feature that counteracts its bias can raise the verification score more than removing the shortcut itself. A larger `window` evaluates more candidates per round but also gives noise more chances.
+- **Greedy, one feature per round.** Each round adds one feature to the removal set and never puts one back. Shortcuts interact: a weak shortcut may only become visible after a stronger one is removed, and while a shortcut is still present, removing a genuine feature that counteracts its bias can raise the verification score more than removing the shortcut itself. A larger `window` evaluates more candidates per round but also gives noise more chances.
 - **Shortcuts the model learns but the verification set does not punish are not removed.** A feature that stops being informative at deployment, rather than misleading, costs little on the verification set, and its removal may not stand out from noise.
 - **Cost.** Each round trains `window` models; a run trains about `1 + max_rounds × window` models.
 - **Classification only**, with metrics computed from predicted labels and probabilities.
 - **Tabular backend:** numeric features only. Gini importance is computed on the training data and favours continuous, high-cardinality features. The default `autogluon` screening can drop a column that is not an exact duplicate (see above); use `screening: exact` if you do not need to reproduce the paper.
-- **Text backend (experimental):** a port of research code that has not been validated beyond the original experiments. Pooling weights show where the model attends, not a causal effect of a word. Only whole words are removed and punctuation is kept, so an artifact such as a `(source)` tag or a `Prefix:` leaves `()` or `:` behind, which the model can keep using and the word-level explainer cannot rank; texts are re-tokenised afterwards. Encoder outputs are cached in memory for every distinct text, which grows with corpus size × sequence length × hidden size. The default encoder is ELECTRA-small, chosen to run on a CPU; the original experiments used ELECTRA-base on GPU.
+- **Text backend (experimental):** a port of research code that has not been validated beyond the original experiments. Pooling weights show where the model attends, not a causal effect of a word. Only whole words are removed and punctuation is kept, so an artefact such as a `(source)` tag or a `Prefix:` leaves `()` or `:` behind, which the model can keep using and the word-level explainer cannot rank; texts are re-tokenised afterwards. Encoder outputs are cached in memory for every distinct text, which grows with corpus size × sequence length × hidden size. The default encoder is ELECTRA-small, chosen to run on a CPU; the original experiments used ELECTRA-base on GPU.
 
 ## Development
 
